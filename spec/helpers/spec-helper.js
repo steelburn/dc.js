@@ -1,30 +1,27 @@
 /* global parseTranslate */
-beforeEach(function () {
-    jasmine.clock().install();
+/* eslint "no-unused-vars": 0 */
 
-    // If we're using browserify bundle, pull d3 and crossfilter out of it,
-    // so that tests don't have to deal with this incidental complexity.
-    /* jshint -W020 */
-    if (typeof d3 === 'undefined') { d3 = dc.d3; }
-    if (typeof crossfilter === 'undefined') { crossfilter = dc.crossfilter; }
-    /* jshint +W020 */
+/*exported appendChartID, coordsFromTranslate, makeDate, cleanDateRange, flushAllD3Transitions */
+/*exported simulateChartBrushing, simulateChart2DBrushing */
+
+beforeEach(() => {
+    jasmine.clock().install();
     d3.select('body').append('div').attr('id', 'test-content');
 });
 
-afterEach(function () {
+afterEach(() => {
     dc.deregisterAllCharts();
     dc.renderlet(null);
     d3.selectAll('#test-content').remove();
     jasmine.clock().uninstall();
 });
 
-/* jshint -W098 */
 function appendChartID (id) {
     return d3.select('#test-content').append('div').attr('id', id);
 }
 
 function coordsFromTranslate (translationString) {
-    var result = parseTranslate(translationString);
+    const result = parseTranslate(translationString);
     expect(result).not.toBeNull();
     return {x: +result[1], y: +result[2]};
 }
@@ -45,9 +42,30 @@ function cleanDateRange (range) {
 
 // http://stackoverflow.com/questions/20068497/d3-transition-in-unit-testing
 function flushAllD3Transitions () {
-    var now = Date.now;
-    Date.now = function () { return Infinity; };
-    d3.timer.flush();
-    Date.now = now;
+    d3.timerFlush();
 }
-/* jshint +W098 */
+
+// Simulate a dummy event - just enough for the handler to get fooled
+const simulateChartBrushing = function (chart, domainSelection) {
+    // D3v4 needs scaled coordinates for the event
+    const scaledSelection = domainSelection.map(coord => chart.x()(coord));
+
+    // an event with fields that dc cares about
+    chart._brushing({
+        selection: scaledSelection
+    });
+};
+
+// Simulate a dummy event - just enough for the handler to get fooled
+const simulateChart2DBrushing = function (chart, domainSelection) {
+    // D3v4 needs scaled coordinates for the event
+    const scaledSelection = domainSelection.map(point => point.map((coord, i) => {
+        const scale = i === 0 ? chart.x() : chart.y();
+        return scale(coord);
+    }));
+
+    // an event with fields that dc cares about
+    chart._brushing({
+        selection: scaledSelection
+    });
+};

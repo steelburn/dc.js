@@ -29,16 +29,12 @@ $font_sans_serif: sans-serif;
     stroke-opacity: 0.5;
 }
 
-div.dc-chart {
-    float: left;
-}
-
 .dc-chart {
     rect {
         &.bar {
             stroke: none;
             cursor: pointer;
-            &:hover {
+            &:hover,&:focus {
                 fill-opacity: .5;
             }
         }
@@ -54,7 +50,10 @@ div.dc-chart {
         &.external {
             fill: $color_black;
         }
-        :hover, &.highlight {
+        &:focus {
+            fill-opacity: .8;
+        }
+        :hover &.highlight {
             fill-opacity: .8;
         }
     }
@@ -91,22 +90,19 @@ div.dc-chart {
     .grid-line, .axis .grid-line, .grid-line line, .axis .grid-line line {
         fill: none;
         stroke: $color_celeste;
-        opacity: .5;
         shape-rendering: crispEdges;
     }
     .brush {
         rect {
-            &.background {
-                z-index: -999;
-            }
-            &.extent {
+            &.selection {
                 fill: $color_steel_blue;
                 fill-opacity: .125;
             }
         }
-        .resize path {
+        .custom-brush-handle {
             fill: $color_gallery;
             stroke: $color_storm_dust;
+            cursor: ew-resize;
         }
     }
     path {
@@ -130,7 +126,7 @@ div.dc-chart {
     g {
         &.state {
             cursor: pointer;
-            :hover {
+            :hover,:focus {
                 fill-opacity: .8;
             }
             path {
@@ -149,7 +145,7 @@ div.dc-chart {
             rect {
                 fill-opacity: 0.8;
                 cursor: pointer;
-                &:hover {
+                &:hover,&:focus {
                     fill-opacity: 0.6;
                 }
             }
@@ -173,14 +169,14 @@ div.dc-chart {
             fill-opacity: .2;
         }
         &.axis text {
-            @include no-select
+            @include no-select;
             pointer-events: none;
         }
     }
     .node {
         font-size: 0.7em;
         cursor: pointer;
-        :hover {
+        :hover,:focus {
             fill-opacity: .8;
         }
     }
@@ -202,7 +198,7 @@ div.dc-chart {
             @include no-select;
             pointer-events: none;
         }
-        line, circle {
+        line {
             fill: $color_white;
         }
         rect, line, circle {
@@ -212,9 +208,17 @@ div.dc-chart {
         .center {
             stroke-dasharray: 3, 3;
         }
+        .data {
+            stroke: none;
+            stroke-width: 0px;
+        }
         .outlier {
             fill: none;
             stroke: $color_celeste;
+        }
+        .outlierBold {
+            fill: red;
+            stroke: none;
         }
         &.deselected {
             opacity: 0.5;
@@ -244,9 +248,6 @@ div.dc-chart {
             cursor: default;
         }
     }
-    circle.dot {
-        stroke: none;
-    }
 }
 
 .dc-data-count {
@@ -267,8 +268,58 @@ div.dc-chart {
     g.dc-legend-item.fadeout {
         @extend %extend_1;
     }
+    g.dc-legend-item.selected {
+        fill: blue;
+    }
 }
 
 .dc-hard .number-display {
     float: none;
+}
+
+
+div.dc-html-legend {
+  overflow-y: auto;
+  overflow-x: hidden;
+  height: inherit;
+  float: right;
+  padding-right: 2px;
+  .dc-legend-item-horizontal {
+    display: inline-block;
+    margin-left: 5px;
+    margin-right: 5px;
+    cursor: pointer;
+      &.selected{
+          background-color: rgb(49, 130, 189);
+          color: white;
+      }
+  }
+  .dc-legend-item-vertical {
+    display: block;
+    margin-top: 5px;
+    padding-top: 1px;
+    padding-bottom: 1px;
+    cursor: pointer;
+      &.selected{
+          background-color: rgb(49, 130, 189);
+          color: white;
+      }
+  }
+  .dc-legend-item-color {
+    display: table-cell;
+    width: 12px;
+    height: 12px;
+  }
+  .dc-legend-item-label {
+    line-height: 12px;
+    display: table-cell;
+    vertical-align: middle;
+    padding-left: 3px;
+    padding-right: 3px;
+    font-size: 0.75em;
+  }
+}
+
+.dc-html-legend-container{
+    height: inherit;
 }

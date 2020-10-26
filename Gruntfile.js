@@ -2,62 +2,42 @@ module.exports = function (grunt) {
     'use strict';
 
     require('load-grunt-tasks')(grunt, {
-        pattern: ['grunt-*', '!grunt-lib-phantomjs', '!grunt-template-jasmine-istanbul']
+        pattern: ['grunt-*']
     });
     require('time-grunt')(grunt);
-    var formatFileList = require('./grunt/format-file-list')(grunt);
 
-    var config = {
+    grunt.loadNpmTasks('grunt-karma');
+
+    const formatFileList = require('./grunt/format-file-list')(grunt);
+
+    const config = {
         src: 'src',
         spec: 'spec',
         web: 'web',
+        websrc: 'web-src',
+        dist: 'dist',
         pkg: require('./package.json'),
-        banner: grunt.file.read('./LICENSE_BANNER'),
-        jsFiles: module.exports.jsFiles
+        banner: grunt.file.read('./LICENSE_BANNER')
     };
+
+    // in d3v4 and d3v5 pre-built d3.js are in different sub folders
+    const d3pkgSubDir = config.pkg.dependencies.d3.split('.')[0].replace(/[^\d]/g, '') === '4' ? 'build' : 'dist';
+
+    const lintableFiles = `'${config.src}' '${config.spec}' '*.js' 'grunt/*.js' '<%= conf.websrc %>/stock.js'`;
+
+    const sass = require('node-sass');
 
     grunt.initConfig({
         conf: config,
 
-        concat: {
-            js: {
-                src: '<%= conf.jsFiles %>',
-                dest: '<%= conf.pkg.name %>.js',
-                options: {
-                    process: true,
-                    sourceMap: true,
-                    banner: '<%= conf.banner %>'
-                }
-            },
-            welcome: {
-                src: ['docs/welcome.base.md', 'web/img/class-hierarchy.svg'],
-                dest: 'welcome.md',
-                options: {
-                    process: function (src, filepath) {
-                        return /svg/.test(filepath) ?
-                            src.split('\n').slice(5).join('\n') :
-                            src;
-                    }
-                }
-            }
-        },
         sass: {
+            options: {
+                implementation: sass
+            },
             dist: {
                 files: {
-                    '<%= conf.pkg.name %>.css': 'style/<%= conf.pkg.name %>.scss'
+                    '<%= conf.dist %>/style/<%= conf.pkg.name %>.css': 'style/<%= conf.pkg.name %>.scss'
                 }
-            }
-        },
-        uglify: {
-            jsmin: {
-                options: {
-                    mangle: true,
-                    compress: true,
-                    sourceMap: true,
-                    banner: '<%= conf.banner %>'
-                },
-                src: '<%= conf.pkg.name %>.js',
-                dest: '<%= conf.pkg.name %>.min.js'
             }
         },
         cssmin: {
@@ -67,66 +47,42 @@ module.exports = function (grunt) {
             },
             main: {
                 files: {
-                    '<%= conf.pkg.name %>.min.css': ['<%= conf.pkg.name %>.css']
-                }
-            }
-        },
-        jscs: {
-            source: {
-                src: [
-                    '<%= conf.src %>/**/*.js',
-                    '!<%= conf.src %>/{banner,footer}.js',
-                    '<%= conf.spec %>/**/*.js',
-                    'Gruntfile.js',
-                    'grunt/*.js',
-                    '<%= conf.web %>/stock.js'],
-                options: {
-                    config: '.jscsrc'
-                }
-            }
-        },
-        jshint: {
-            source: {
-                src: [
-                    '<%= conf.src %>/**/*.js',
-                    '!<%= conf.src %>/{banner,footer}.js',
-                    '<%= conf.spec %>/**/*.js',
-                    'Gruntfile.js',
-                    'grunt/*.js',
-                    '<%= conf.web %>/stock.js'
-                ],
-                options: {
-                    jshintrc: '.jshintrc'
+                    '<%= conf.dist %>/style/<%= conf.pkg.name %>.min.css': ['<%= conf.dist %>/style/<%= conf.pkg.name %>.css']
                 }
             }
         },
         watch: {
             jsdoc2md: {
-                files: ['welcome.md', '<%= conf.src %>/**/*.js'],
+                files: ['docs/welcome.base.md', '<%= conf.src %>/**/*.js'],
                 tasks: ['build', 'jsdoc', 'jsdoc2md']
             },
             scripts: {
                 files: ['<%= conf.src %>/**/*.js', '<%= conf.web %>/stock.js'],
                 tasks: ['docs']
             },
+            websrc: {
+                files: ['<%= conf.websrc %>/**/*.html', '<%= conf.websrc %>/**/*.js'],
+                tasks: ['docs']
+            },
             sass: {
                 files: ['style/<%= conf.pkg.name %>.scss'],
                 tasks: ['sass', 'cssmin:main', 'copy:dc-to-gh']
             },
-            jasmineRunner: {
-                files: ['<%= conf.spec %>/**/*.js'],
-                tasks: ['jasmine:specs:build']
-            },
             tests: {
-                files: ['<%= conf.src %>/**/*.js', '<%= conf.spec %>/**/*.js'],
+                files: [
+                    '<%= conf.src %>/**/*.js',
+                    '<%= conf.spec %>/*.js',
+                    '<%= conf.spec %>/helpers/*.js',
+                    '<%= conf.websrc %>/**/*',
+                    'docs/**/*'],
                 tasks: ['test']
             },
             reload: {
-                files: ['<%= conf.pkg.name %>.js',
-                    '<%= conf.pkg.name %>.css',
-                    '<%= conf.web %>/js/<%= conf.pkg.name %>.js',
-                    '<%= conf.web %>/css/<%= conf.pkg.name %>.css',
-                    '<%= conf.pkg.name %>.min.js'],
+                files: ['<%= conf.dist %>/<%= conf.pkg.name %>.js',
+                        '<%= conf.dist %>/style/<%= conf.pkg.name %>.css',
+                        '<%= conf.web %>/js/<%= conf.pkg.name %>.js',
+                        '<%= conf.web %>/css/<%= conf.pkg.name %>.css',
+                        '<%= conf.dist %>/<%= conf.pkg.name %>.min.js'],
                 options: {
                     livereload: true
                 }
@@ -135,7 +91,7 @@ module.exports = function (grunt) {
         connect: {
             server: {
                 options: {
-                    port: 8888,
+                    port: process.env.PORT || 8888,
                     base: '.'
                 }
             }
@@ -147,104 +103,62 @@ module.exports = function (grunt) {
                     summary: true,
                     specs:  '<%= conf.spec %>/*-spec.js',
                     helpers: [
-                        '<%= conf.web %>/js/jasmine-jsreporter.js',
-                        '<%= conf.spec %>/helpers/*.js'
+                        '<%= conf.spec %>/helpers/*.js',
+                        '<%= conf.spec %>/3rd-party/*.js'
                     ],
                     styles: [
-                        '<%= conf.web %>/css/dc.css'
+                        '<%= conf.dist %>/style/dc.css'
                     ],
-                    version: '2.0.0',
                     outfile: '<%= conf.spec %>/index.html',
                     keepRunner: true
                 },
                 src: [
-                    '<%= conf.web %>/js/d3.js',
-                    '<%= conf.web %>/js/crossfilter.js',
-                    '<%= conf.web %>/js/colorbrewer.js',
-                    '<%= conf.pkg.name %>.js'
-                ]
-            },
-            coverage: {
-                src: '<%= jasmine.specs.src %>',
-                options: {
-                    specs: '<%= jasmine.specs.options.specs %>',
-                    helpers: '<%= jasmine.specs.options.helpers %>',
-                    version: '<%= jasmine.specs.options.version %>',
-                    template: require('grunt-template-jasmine-istanbul'),
-                    templateOptions: {
-                        coverage: 'coverage/jasmine/coverage.json',
-                        report: [
-                            {
-                                type: 'html',
-                                options: {
-                                    dir: 'coverage/jasmine'
-                                }
-                            }
-                        ]
-                    }
-                }
-            },
-            browserify: {
-                options: {
-                    display: 'short',
-                    summary: true,
-                    specs:  '<%= conf.spec %>/*-spec.js',
-                    helpers: [
-                        '<%= conf.web %>/js/jasmine-jsreporter.js',
-                        '<%= conf.spec %>/helpers/*.js'
-                    ],
-                    version: '2.0.0',
-                    outfile: '<%= conf.spec %>/index-browserify.html',
-                    keepRunner: true
-                },
-                src: [
-                    'bundle.js'
+                    '<%= conf.dist %>/<%= conf.pkg.name %>.js'
                 ]
             }
         },
-        'saucelabs-jasmine': {
-            all: {
-                options: {
-                    urls: ['http://localhost:8888/spec/'],
-                    tunnelTimeout: 5,
-                    build: process.env.TRAVIS_JOB_ID,
-                    concurrency: 3,
-                    browsers: [
-                        {
-                            browserName: 'firefox',
-                            version: '45.0',
-                            platform: 'Linux'
-                        },
-                        {
-                            browserName: 'safari',
-                            version: '9.0',
-                            platform: 'OS X 10.11'
-                        },
-                        {
-                            browserName: 'internet explorer',
-                            version: '11.0',
-                            platform: 'Windows 10'
-                        },
-                        {
-                            browserName: 'internet explorer',
-                            version: '11.0',
-                            platform: 'Windows 8.1'
-                        },
-                        {
-                            browserName: 'MicrosoftEdge',
-                            version: '14',
-                            platform: 'Windows 10'
-                        }
-                    ],
-                    testname: '<%= conf.pkg.name %>.js'
+        karma: {
+            options: {
+                configFile: 'karma.conf.js'
+            },
+            unit: {},
+            coverage: {
+                reporters: ['progress', 'coverage'],
+
+                preprocessors: {
+                    // source files, that you wanna generate coverage for
+                    // do not include tests or libraries
+                    // (these files will be instrumented by Istanbul)
+                    '<%= conf.dist %>/<%= conf.pkg.name %>.js': ['coverage']
+                },
+
+                // optionally, configure the reporter
+                coverageReporter: {
+                    type: 'html',
+                    dir: 'coverage/'
                 }
-            }
+            },
+            ci: {
+                browsers: ['ChromeNoSandboxHeadless', 'FirefoxHeadless'],
+                concurrency: 1,
+                reporters: ['dots', 'summary']
+            },
+            'ci-windows': {
+                browsers: ['EdgeHeadless', 'ChromeNoSandboxHeadless', 'FirefoxHeadless'],
+                concurrency: 1,
+                reporters: ['dots', 'summary']
+            },
+            'ci-macos': {
+                browsers: ['Safari', 'ChromeNoSandboxHeadless', 'FirefoxHeadless'],
+                concurrency: 1,
+                reporters: ['dots', 'summary']
+            },
         },
         jsdoc: {
             dist: {
-                src: ['welcome.md', '<%= conf.src %>/**/*.js', '!<%= conf.src %>/{banner,footer}.js'],
+                src: ['docs/welcome.base.md', '<%= conf.src %>/**/*.js', '!<%= conf.src %>/{banner,footer}.js'],
                 options: {
-                    destination: 'web/docs/html',
+                    destination: '<%= conf.web %>/docs/html',
                     template: 'node_modules/ink-docstrap/template',
                     configure: 'jsdoc.conf.json'
                 }
@@ -252,8 +166,8 @@ module.exports = function (grunt) {
         },
         jsdoc2md: {
             dist: {
-                src: 'dc.js',
-                dest: 'web/docs/api-latest.md'
+                src: '<%= conf.dist %>/<%= conf.pkg.name %>.js',
+                dest: 'docs/api-latest.md'
             }
         },
         docco: {
@@ -275,9 +189,22 @@ module.exports = function (grunt) {
                 files: [
                     {
                         expand: true,
+                        nonull: true,
+                        cwd: '<%= conf.websrc %>',
+                        src: '**',
+                        dest: '<%= conf.web %>/'
+                    },
+                    {
+                        expand: true,
+                        cwd: 'docs/old-api-docs',
+                        src: '**',
+                        dest: '<%= conf.web %>/docs/'
+                    },
+                    {
+                        expand: true,
                         flatten: true,
                         nonull: true,
-                        src: ['<%= conf.pkg.name %>.css', '<%= conf.pkg.name %>.min.css'],
+                        src: ['<%= conf.dist %>/style/<%= conf.pkg.name %>.css', '<%= conf.dist %>/style/<%= conf.pkg.name %>.min.css'],
                         dest: '<%= conf.web %>/css/'
                     },
                     {
@@ -285,17 +212,43 @@ module.exports = function (grunt) {
                         flatten: true,
                         nonull: true,
                         src: [
-                            '<%= conf.pkg.name %>.js',
-                            '<%= conf.pkg.name %>.js.map',
-                            '<%= conf.pkg.name %>.min.js',
-                            '<%= conf.pkg.name %>.min.js.map',
-                            'node_modules/d3/d3.js',
+                            '<%= conf.dist %>/<%= conf.pkg.name %>.js',
+                            '<%= conf.dist %>/<%= conf.pkg.name %>.js.map',
+                            '<%= conf.dist %>/<%= conf.pkg.name %>.min.js',
+                            '<%= conf.dist %>/<%= conf.pkg.name %>.min.js.map',
+                            `node_modules/d3/${d3pkgSubDir}/d3.js`,
                             'node_modules/crossfilter2/crossfilter.js',
-                            'node_modules/queue-async/build/queue.js',
-                            'node_modules/grunt-saucelabs/examples/jasmine/lib/jasmine-jsreporter/jasmine-jsreporter.js',
-                            'node_modules/file-saver/FileSaver.js'
+                            'node_modules/file-saver/FileSaver.js',
+                            'node_modules/reductio/reductio.js',
+                            'node_modules/regression/dist/regression.js'
                         ],
                         dest: '<%= conf.web %>/js/'
+                    }
+                ]
+            },
+            'specs': {
+                files: [
+                    {
+                        expand: true,
+                        flatten: true,
+                        nonull: true,
+                        src: [
+                            `node_modules/d3/${d3pkgSubDir}/d3.js`,
+                            'node_modules/crossfilter2/crossfilter.js',
+                        ],
+                        dest: '<%= conf.spec %>/3rd-party/'
+                    },
+                    {
+                        expand: true,
+                        flatten: true,
+                        nonull: true,
+                        src: [
+                            'node_modules/compare-versions/index.js'
+                        ],
+                        dest: '<%= conf.spec %>/3rd-party/',
+                        rename: function (dest, src) {
+                            return `${dest}compare-versions.js`;
+                        }
                     }
                 ]
             }
@@ -308,10 +261,11 @@ module.exports = function (grunt) {
                     title: 'Index of dc.js examples',
                     heading: 'Examples of using dc.js',
                     description: 'An attempt to present a simple example of each chart type.',
-                    sourceLink: 'https://github.com/dc-js/dc.js/tree/master/<%= conf.web %>/examples'
+                    also: ['transitions', 'resizing', 'zoom'],
+                    sourceLink: 'https://github.com/dc-js/dc.js/tree/develop/<%= conf.websrc %>/examples'
                 },
                 files: [
-                    {dest: '<%= conf.web %>/examples/index.html', src: ['<%= conf.web %>/examples/*.html']}
+                    {dest: '<%= conf.web %>/examples/index.html', src: ['<%= conf.websrc %>/examples/*.html']}
                 ]
             },
             'transitions-listing': {
@@ -322,10 +276,11 @@ module.exports = function (grunt) {
                     heading: 'Eyeball tests for dc.js transitions',
                     description: 'Transitions can only be tested by eye. ' +
                         'These pages automate the transitions so they can be visually verified.',
-                    sourceLink: 'https://github.com/dc-js/dc.js/tree/master/<%= conf.web %>/transitions'
+                    also: ['examples', 'resizing', 'zoom'],
+                    sourceLink: 'https://github.com/dc-js/dc.js/tree/develop/<%= conf.websrc %>/transitions'
                 },
                 files: [
-                    {dest: '<%= conf.web %>/transitions/index.html', src: ['<%= conf.web %>/transitions/*.html']}
+                    {dest: '<%= conf.web %>/transitions/index.html', src: ['<%= conf.websrc %>/transitions/*.html']}
                 ]
             },
             'resizing-listing': {
@@ -339,10 +294,11 @@ module.exports = function (grunt) {
                         'For the examples with a single chart taking up the entire window, you can add <code>?resize=viewbox</code> ' +
                         'to the URL to test resizing the chart using the ' +
           '<a href="http://dc-js.github.io/dc.js/docs/html/dc.baseMixin.html#useViewBoxResizing__anchor">useViewBoxResizing</a> strategy.',
-                    sourceLink: 'https://github.com/dc-js/dc.js/tree/master/<%= conf.web %>/resizing'
+                    also: ['examples', 'transitions', 'zoom'],
+                    sourceLink: 'https://github.com/dc-js/dc.js/tree/develop/<%= conf.websrc %>/resizing'
                 },
                 files: [
-                    {dest: '<%= conf.web %>/resizing/index.html', src: ['<%= conf.web %>/resizing/*.html']}
+                    {dest: '<%= conf.web %>/resizing/index.html', src: ['<%= conf.websrc %>/resizing/*.html']}
                 ]
             },
             'zoom-listing': {
@@ -353,14 +309,14 @@ module.exports = function (grunt) {
                     heading: 'Interactive test for dc.js chart zoom',
                     description: 'It\'s hard to conceive of a way to test zoom except by trying it. ' +
                         'So this is a substitute for automated tests in this area',
-                    sourceLink: 'https://github.com/dc-js/dc.js/tree/master/<%= conf.web %>/zoom'
+                    also: ['examples', 'transitions', 'resizing'],
+                    sourceLink: 'https://github.com/dc-js/dc.js/tree/develop/<%= conf.websrc %>/zoom'
                 },
                 files: [
-                    {dest: '<%= conf.web %>/zoom/index.html', src: ['<%= conf.web %>/zoom/*.html']}
+                    {dest: '<%= conf.web %>/zoom/index.html', src: ['<%= conf.websrc %>/zoom/*.html']}
                 ]
             }
         },
-
         'gh-pages': {
             options: {
                 base: '<%= conf.web %>',
@@ -376,7 +332,7 @@ module.exports = function (grunt) {
                         'git checkout master',
                         'git reset --hard origin/master',
                         'git fetch origin',
-                        'git merge --no-ff origin/pr/' + pr + ' -m \'Merge pull request #' + pr + '\''
+                        `git merge --no-ff origin/pr/${pr} -m 'Merge pull request #${pr}'`
                     ].join('&&');
                 },
                 options: {
@@ -396,93 +352,60 @@ module.exports = function (grunt) {
                     ' || echo \'Cowardly refusing to overwrite your existing git pre-commit hook.\''
             },
             hierarchy: {
-                command: 'dot -Tsvg -o web/img/class-hierarchy.svg class-hierarchy.dot'
-            }
-        },
-        browserify: {
-            dev: {
-                src: '<%= conf.pkg.name %>.js',
-                dest: 'bundle.js',
-                options: {
-                    browserifyOptions: {
-                        standalone: 'dc'
-                    }
-                }
+                command: 'dot -Tsvg -o <%= conf.websrc %>/img/class-hierarchy.svg class-hierarchy.dot'
+            },
+            'dist-clean': {
+                command: 'rm -rf dist/'
+            },
+            rollup: {
+                command: 'rollup --config'
+            },
+            eslint: {
+                command: `eslint ${lintableFiles}`
+            },
+            'eslint-fix': {
+                command: `eslint ${lintableFiles} --fix`
             }
         }
     });
 
-    grunt.registerTask('merge', 'Merge a github pull request.', function (pr) {
-        grunt.log.writeln('Merge Github Pull Request #' + pr);
-        grunt.task.run(['shell:merge:' + pr, 'test' , 'shell:amend']);
+    grunt.registerTask('merge', 'Merge a github pull request.', pr => {
+        grunt.log.writeln(`Merge Github Pull Request #${pr}`);
+        grunt.task.run([`shell:merge:${pr}`, 'test' , 'shell:amend']);
     });
-    grunt.registerTask('test-stock-example', 'Test a new rendering of the stock example web page against a ' +
-        'baseline rendering', function (option) {
+    grunt.registerTask(
+        'test-stock-example',
+        'Test a new rendering of the stock example web page against a baseline rendering',
+        function (option) {
             require('./regression/stock-regression-test.js').testStockExample(this.async(), option === 'diff');
         });
     grunt.registerTask('update-stock-example', 'Update the baseline stock example web page.', function () {
         require('./regression/stock-regression-test.js').updateStockExample(this.async());
     });
-    grunt.registerTask('watch:jasmine-docs', function () {
+    grunt.registerTask('watch:scripts-sass-docs', () => {
         grunt.config('watch', {
-            options: {
-                interrupt: true
-            },
-            runner: grunt.config('watch').jasmineRunner,
             scripts: grunt.config('watch').scripts,
+            websrc: grunt.config('watch').websrc,
             sass: grunt.config('watch').sass
         });
         grunt.task.run('watch');
     });
 
     // task aliases
-    grunt.registerTask('build', ['concat', 'sass', 'uglify', 'cssmin']);
+    grunt.registerTask('build', ['shell:dist-clean', 'shell:rollup', 'sass', 'cssmin']);
     grunt.registerTask('docs', ['build', 'copy', 'jsdoc', 'jsdoc2md', 'docco', 'fileindex']);
     grunt.registerTask('web', ['docs', 'gh-pages']);
-    grunt.registerTask('server', ['docs', 'fileindex', 'jasmine:specs:build', 'connect:server', 'watch:jasmine-docs']);
-    grunt.registerTask('test', ['build', 'copy', 'jasmine:specs']);
-    grunt.registerTask('test-browserify', ['build', 'copy', 'browserify', 'jasmine:browserify']);
-    grunt.registerTask('coverage', ['build', 'copy', 'jasmine:coverage']);
-    grunt.registerTask('ci', ['test', 'jasmine:specs:build', 'connect:server', 'saucelabs-jasmine']);
-    grunt.registerTask('ci-pull', ['test', 'jasmine:specs:build', 'connect:server']);
-    grunt.registerTask('lint', ['jshint', 'jscs']);
+    grunt.registerTask('server-only', ['docs', 'fileindex', 'jasmine:specs:build', 'connect:server']);
+    grunt.registerTask('server', ['server-only', 'watch:scripts-sass-docs']);
+    // This task will active server, test when initiated, and then keep a watch for changes, and rebuild and test as needed
+    grunt.registerTask('test-n-serve', ['server-only', 'test', 'watch:tests']);
+    grunt.registerTask('test', ['build', 'copy', 'karma:unit']);
+    grunt.registerTask('coverage', ['build', 'copy', 'karma:coverage']);
+    grunt.registerTask('ci-pull', ['build', 'copy', 'karma:ci']);
+    grunt.registerTask('ci-windows', ['build', 'copy', 'karma:ci-windows']);
+    grunt.registerTask('ci-macos', ['build', 'copy', 'karma:ci-macos']);
+    grunt.registerTask('lint', ['shell:eslint']);
+    grunt.registerTask('lint-fix', ['shell:eslint-fix']);
     grunt.registerTask('default', ['build', 'shell:hooks']);
     grunt.registerTask('doc-debug', ['build', 'jsdoc', 'jsdoc2md', 'watch:jsdoc2md']);
 };
-
-module.exports.jsFiles = [
-    'src/banner.js',   // NOTE: keep this first
-    'src/core.js',
-    'src/errors.js',
-    'src/utils.js',
-    'src/logger.js',
-    'src/events.js',
-    'src/filters.js',
-    'src/base-mixin.js',
-    'src/margin-mixin.js',
-    'src/color-mixin.js',
-    'src/coordinate-grid-mixin.js',
-    'src/stack-mixin.js',
-    'src/cap-mixin.js',
-    'src/bubble-mixin.js',
-    'src/pie-chart.js',
-    'src/bar-chart.js',
-    'src/line-chart.js',
-    'src/data-count.js',
-    'src/data-table.js',
-    'src/data-grid.js',
-    'src/bubble-chart.js',
-    'src/composite-chart.js',
-    'src/series-chart.js',
-    'src/geo-choropleth-chart.js',
-    'src/bubble-overlay.js',
-    'src/row-chart.js',
-    'src/legend.js',
-    'src/scatter-plot.js',
-    'src/number-display.js',
-    'src/heatmap.js',
-    'src/d3.box.js',
-    'src/box-plot.js',
-    'src/select-menu.js',
-    'src/footer.js'  // NOTE: keep this last
-];

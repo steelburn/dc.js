@@ -1,33 +1,32 @@
-/* jscs:disable validateQuoteMarks, maximumLineLength */
-/* jshint -W109, -W101, -W098 */
+/* eslint "max-len": 0, "quotes": 0, "no-unused-vars": 0 */
 function dateCleaner (e) {
-    e.dd = d3.time.format.iso.parse(e.date);
+    e.dd = d3.isoParse(e.date);
 }
 
 function loadDateFixture () {
-    var fixture = JSON.parse("[" +
-        "{\"value\":\"44\",\"nvalue\":\"-4\",\"countrycode\":\"US\",\"state\":\"California\",\"status\":\"T\",\"id\":1,\"region\":\"South\",\"date\":\"2012-05-25T16:10:09Z\"}, " +
-        "{\"value\":\"22\",\"nvalue\":\"-2\",\"countrycode\":\"US\",\"state\":\"Colorado\",\"status\":\"F\",\"id\":2,\"region\":\"West\",\"date\":\"2012-06-10T16:10:19Z\"}, " +
-        "{\"value\":\"33\",\"nvalue\":\"1\",\"countrycode\":\"US\",\"state\":\"Delaware\",\"status\":\"T\",\"id\":3,\"region\":\"West\",\"date\":\"2012-08-10T16:20:29Z\"}, " +
-        "{\"value\":\"44\",\"nvalue\":\"-3\",\"countrycode\":\"US\",\"state\":\"California\",\"status\":\"F\",\"id\":4,\"region\":\"South\",\"date\":\"2012-07-01T16:10:39Z\"}, " +
-        "{\"value\":\"55\",\"nvalue\":\"-5\",\"countrycode\":\"CA\",\"state\":\"Ontario\",\"status\":\"T\",\"id\":5,\"region\":\"Central\",\"date\":\"2012-06-10T16:10:49Z\"}, " +
-        "{\"value\":\"66\",\"nvalue\":\"-4\",\"countrycode\":\"US\",\"state\":\"California\",\"status\":\"F\",\"id\":6,\"region\":\"West\",\"date\":\"2012-06-08T16:10:59Z\"}, " +
-        "{\"value\":\"22\",\"nvalue\":\"10\",\"countrycode\":\"CA\",\"state\":\"Ontario\",\"status\":\"T\",\"id\":7,\"region\":\"East\",\"date\":\"2012-07-10T16:10:09Z\"}, " +
-        "{\"value\":\"33\",\"nvalue\":\"1\",\"countrycode\":\"US\",\"state\":\"Mississippi\",\"status\":\"F\",\"id\":8,\"region\":\"Central\",\"date\":\"2012-07-10T16:10:19Z\"}, " +
-        "{\"value\":\"44\",\"nvalue\":\"2\",\"countrycode\":\"US\",\"state\":\"Mississippi\",\"status\":\"T\",\"id\":9,\"region\":\"Central\",\"date\":\"2012-08-10T16:30:29Z\"}, " +
-        "{\"value\":\"55\",\"nvalue\":\"-3\",\"countrycode\":\"US\",\"state\":\"Oklahoma\",\"status\":\"F\",\"id\":10,\"region\":\"\",\"date\":\"2012-06-10T16:10:39Z\"}" +
-        "]");
+    const fixture = JSON.parse('[' +
+        '{"value":"44","nvalue":"-4","countrycode":"US","state":"California","status":"T","id":1,"region":"South","date":"2012-05-25T16:10:09Z"}, ' +
+        '{"value":"22","nvalue":"-2","countrycode":"US","state":"Colorado","status":"F","id":2,"region":"West","date":"2012-06-10T16:10:19Z"}, ' +
+        '{"value":"33","nvalue":"1","countrycode":"US","state":"Delaware","status":"T","id":3,"region":"West","date":"2012-08-10T16:20:29Z"}, ' +
+        '{"value":"44","nvalue":"-3","countrycode":"US","state":"California","status":"F","id":4,"region":"South","date":"2012-07-01T16:10:39Z"}, ' +
+        '{"value":"55","nvalue":"-5","countrycode":"CA","state":"Ontario","status":"T","id":5,"region":"Central","date":"2012-06-10T16:10:49Z"}, ' +
+        '{"value":"66","nvalue":"-4","countrycode":"US","state":"California","status":"F","id":6,"region":"West","date":"2012-06-08T16:10:59Z"}, ' +
+        '{"value":"22","nvalue":"10","countrycode":"CA","state":"Ontario","status":"T","id":7,"region":"East","date":"2012-07-10T16:10:09Z"}, ' +
+        '{"value":"33","nvalue":"1","countrycode":"US","state":"Mississippi","status":"F","id":8,"region":"Central","date":"2012-07-10T16:10:19Z"}, ' +
+        '{"value":"44","nvalue":"2","countrycode":"US","state":"Mississippi","status":"T","id":9,"region":"Central","date":"2012-08-10T16:30:29Z"}, ' +
+        '{"value":"55","nvalue":"-3","countrycode":"US","state":"Oklahoma","status":"F","id":10,"region":"","date":"2012-06-10T16:10:39Z"}' +
+        ']');
 
     fixture.forEach(dateCleaner);
     return fixture;
 }
 
 function loadDateFixture2 () {
-    var fixture = JSON.parse(
-        "[" +
-            "{\"value\":\"11\",\"nvalue\":\"-4\",\"countrycode\":\"UK\",\"state\":\"Liverpool\",\"status\":\"T\",\"id\":11,\"region\":\"South\",\"date\":\"2012-05-25T16:20:09Z\"}, " +
-            "{\"value\":\"76\",\"nvalue\":\"-1\",\"countrycode\":\"UK\",\"state\":\"London\",\"status\":\"F\",\"id\":12,\"region\":\"\",\"date\":\"2012-06-10T16:20:39Z\"}" +
-            "]");
+    const fixture = JSON.parse(
+        '[' +
+        '{"value":"11","nvalue":"-4","countrycode":"UK","state":"Liverpool","status":"T","id":11,"region":"South","date":"2012-05-25T16:20:09Z"}, ' +
+        '{"value":"76","nvalue":"-1","countrycode":"UK","state":"London","status":"F","id":12,"region":"","date":"2012-06-10T16:20:39Z"}' +
+        ']');
 
     fixture.forEach(dateCleaner);
     return fixture;
@@ -79,7 +78,7 @@ function loadColorFixture2 () {
 }
 
 function loadIrisFixture () {
-    return d3.csv.parse(
+    return d3.csvParse(
         "sepal_length,sepal_width,petal_length,petal_width,species\n" +
             "5.1,3.5,1.4,0.2,setosa\n" +
             "4.9,3,1.4,0.2,setosa\n" +
@@ -234,5 +233,27 @@ function loadIrisFixture () {
     );
 }
 
-/* jscs:enable validateQuoteMarks, maximumLineLength */
-/* jshint +W109, +W101, +W098 */
+function getSunburstDataOneRing3Segments () {
+    return [
+        {"x":"a","y":1},
+        {"x":"b","y":2},
+        {"x":"c","y":3}
+    ];
+}
+
+function loadSunburstData3CompleteRings () {
+    return [
+        {"x1":"a","x2":"aa","x3":"aaa","y":1},
+        {"x1":"a","x2":"aa","x3":"aaa","y":2},
+        {"x1":"a","x2":"aa","x3":"aaa","y":3}
+    ];
+}
+
+function loadSunburstData10CompleteRings () {
+    return [
+        {"x0": "a", "x1": "a", "x2": "a", "x3": "a", "x4": "a", "x5": "a", "x6": "a", "x7": "a", "x8": "a", "x9": "a", "y": 1},
+        {"x0": "a", "x1": "a", "x2": "a", "x3": "a", "x4": "a", "x5": "a", "x6": "a", "x7": "a", "x8": "a", "x9": "a", "y": 1},
+        {"x0": "a", "x1": "a", "x2": "a", "x3": "a", "x4": "a", "x5": "a", "x6": "a", "x7": "a", "x8": "a", "x9": "a", "y": 1},
+        {"x0": "a", "x1": "a", "x2": "a", "x3": "a", "x4": "a", "x5": "a", "x6": "a", "x7": "a", "x8": "a", "x9": "a", "y": 1},
+    ];
+}

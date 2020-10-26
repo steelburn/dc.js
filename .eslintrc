@@ -1,0 +1,71 @@
+{
+  "env": {
+    "browser": true,
+    "es6": true,
+    "node": true
+  },
+  "parserOptions": {
+    "ecmaVersion": 6,
+    "sourceType": "module"
+  },
+  "extends": "eslint:recommended",
+  "rules": {
+    "no-useless-escape": "off",
+    "no-console": "off",
+    "camelcase": "error",
+    "curly": "error",
+    "eqeqeq": "error",
+    "no-extend-native": "error",
+    "wrap-iife": ["error", "any"],
+    "indent": ["error", 4, {
+        "SwitchCase": 1,
+        "MemberExpression": "off",
+        "CallExpression": {"arguments": "first"},
+        "ArrayExpression": "first",
+        "flatTernaryExpressions": true
+      }
+    ],
+    "no-caller": "error",
+    "no-new": "error",
+    "no-unused-vars": ["error", {"args": "none"}],
+    "max-params": ["error", 5],
+    "max-depth": ["error", 4],
+    "complexity": ["error", 10],
+    "max-len": ["error", 140],
+    "quotes": ["error", "single"],
+    "no-var": "error",
+    "prefer-const": "error",
+    "no-shadow": "error",
+    "prefer-arrow-callback": "error",
+    "arrow-body-style": "error",
+    "implicit-arrow-linebreak": "error",
+    "arrow-parens": ["error", "as-needed"],
+    "space-before-function-paren": ["error", "always"],
+    "no-useless-concat": "error",
+    "prefer-template": "error",
+    "template-curly-spacing": "error",
+    "valid-jsdoc": ["error", {"requireParamDescription": false, "requireReturnDescription": false}]
+  },
+  "overrides": [
+    {
+      "files": ["spec/**/*.js", "web-src/**/*.js"],
+      "globals": {
+        "crossfilter": false,
+        "d3": false,
+        "dc": false
+      }
+    },
+    {
+      "files": ["spec/**/*.js"],
+      "globals": {
+        "jasmine": false,
+        "expect": false,
+        "describe": false,
+        "it": false,
+        "beforeEach": false,
+        "afterEach": false,
+        "spyOn": false
+      }
+    }
+  ]
+}

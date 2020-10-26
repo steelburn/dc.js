@@ -1,28 +1,29 @@
 /* global appendChartID, loadDateFixture */
-describe('dc.bubbleOverlay', function () {
-    var chart, data;
-    var dimension, group;
+describe('dc.bubbleOverlay', () => {
+    let chart, data;
+    let dimension, group;
 
-    beforeEach(function () {
+    beforeEach(() => {
         data = crossfilter(loadDateFixture());
-        dimension = data.dimension(function (d) {return d.state;});
-        group = dimension.group().reduceSum(function (d) {return d.value;});
+        dimension = data.dimension(d => d.state);
+        group = dimension.group().reduceSum(d => d.value);
 
-        var id = 'bubble-overlay';
-        var parent = appendChartID(id);
-        var width = 600, height = 400;
-        var svg = parent.append('svg')
-                .attr({width: width, height: height});
+        const id = 'bubble-overlay';
+        const parent = appendChartID(id);
+        const width = 600, height = 400;
+        const svg = parent.append('svg')
+            .attr('width', width)
+            .attr('height', height);
 
-        chart = dc.bubbleOverlay('#' + id)
+        chart = new dc.BubbleOverlay(`#${id}`)
             .svg(svg)
             .dimension(dimension)
             .group(group)
             .width(width)
             .height(height)
             .transitionDuration(0)
-            .title(function (d) {return 'Title: ' + d.key;})
-            .r(d3.scale.linear().domain([0, 100]))
+            .title(d => `Title: ${d.key}`)
+            .r(d3.scaleLinear().domain([0, 100]))
             .maxBubbleRelativeSize(0.1)
             .ordinalColors(['blue'])
             .point('California', 100, 120)
@@ -35,113 +36,102 @@ describe('dc.bubbleOverlay', function () {
         chart.render();
     });
 
-    describe('creation', function () {
-        it('should generate an instance of the dc chart', function () {
+    describe('creation', () => {
+        it('should generate an instance of the dc chart', () => {
             expect(dc.instanceOfChart(chart)).toBeTruthy();
         });
 
-        it('should be registered', function () {
+        it('should be registered', () => {
             expect(dc.hasChart(chart)).toBeTruthy();
         });
 
-        it('should generate the correct number of overlay groups', function () {
-            expect(chart.selectAll('g.node')[0].length).toEqual(6);
+        it('should generate the correct number of overlay groups', () => {
+            expect(chart.selectAll('g.node').nodes().length).toEqual(6);
         });
 
-        it('should generate a correct class name for the overlay groups', function () {
-            expect(d3.select(chart.selectAll('g.node')[0][0]).attr('class')).toEqual('node california');
-            expect(d3.select(chart.selectAll('g.node')[0][3]).attr('class')).toEqual('node ontario');
+        it('should generate a correct class name for the overlay groups', () => {
+            expect(d3.select(chart.selectAll('g.node').nodes()[0]).attr('class')).toEqual('node california');
+            expect(d3.select(chart.selectAll('g.node').nodes()[3]).attr('class')).toEqual('node ontario');
         });
 
-        it('should generate the correct number of overlay bubbles', function () {
-            expect(chart.selectAll('circle.bubble')[0].length).toEqual(6);
+        it('should generate the correct number of overlay bubbles', () => {
+            expect(chart.selectAll('circle.bubble').nodes().length).toEqual(6);
         });
 
-        it('should generate a correct translate for overlay groups', function () {
-            expect(d3.select(chart.selectAll('g.node')[0][0]).attr('transform')).toMatchTranslate(100, 120);
-            expect(d3.select(chart.selectAll('g.node')[0][3]).attr('transform')).toMatchTranslate(180, 90);
+        it('should generate a correct translate for overlay groups', () => {
+            expect(d3.select(chart.selectAll('g.node').nodes()[0]).attr('transform')).toMatchTranslate(100, 120);
+            expect(d3.select(chart.selectAll('g.node').nodes()[3]).attr('transform')).toMatchTranslate(180, 90);
         });
 
-        it('should generate correct radii for circles', function () {
-            expect(d3.select(chart.selectAll('circle.bubble')[0][0]).attr('r')).toEqual('87');
-            expect(d3.select(chart.selectAll('circle.bubble')[0][3]).attr('r')).toEqual('48.5');
+        it('should generate correct radii for circles', () => {
+            expect(d3.select(chart.selectAll('circle.bubble').nodes()[0]).attr('r')).toEqual('87');
+            expect(d3.select(chart.selectAll('circle.bubble').nodes()[3]).attr('r')).toEqual('48.5');
         });
 
-        it('should generate correct labels', function () {
-            expect(d3.select(chart.selectAll('g.node text')[0][0]).text()).toEqual('California');
-            expect(d3.select(chart.selectAll('g.node text')[0][3]).text()).toEqual('Ontario');
+        it('should generate correct labels', () => {
+            expect(d3.select(chart.selectAll('g.node text').nodes()[0]).text()).toEqual('California');
+            expect(d3.select(chart.selectAll('g.node text').nodes()[3]).text()).toEqual('Ontario');
         });
 
-        it('should generate the label only once', function () {
+        it('should generate the label only once', () => {
             chart.redraw();
-            expect(chart.selectAll('g.node text')[0].length).toEqual(6);
+            expect(chart.selectAll('g.node text').nodes().length).toEqual(6);
         });
 
-        it('generate the correct titles', function () {
-            expect(d3.select(chart.selectAll('g.node title')[0][0]).text()).toEqual('Title: California');
-            expect(d3.select(chart.selectAll('g.node title')[0][3]).text()).toEqual('Title: Ontario');
+        it('generate the correct titles', () => {
+            expect(d3.select(chart.selectAll('g.node title').nodes()[0]).text()).toEqual('Title: California');
+            expect(d3.select(chart.selectAll('g.node title').nodes()[3]).text()).toEqual('Title: Ontario');
         });
 
-        it('should only generate titles once', function () {
+        it('should only generate titles once', () => {
             chart.redraw();
-            expect(chart.selectAll('g.node title')[0].length).toEqual(6);
+            expect(chart.selectAll('g.node title').nodes().length).toEqual(6);
         });
 
-        it('should fill circles with the specified colors', function () {
-            expect(d3.select(chart.selectAll('circle.bubble')[0][0]).attr('fill')).toEqual('blue');
-            expect(d3.select(chart.selectAll('circle.bubble')[0][3]).attr('fill')).toEqual('blue');
+        it('should fill circles with the specified colors', () => {
+            expect(d3.select(chart.selectAll('circle.bubble').nodes()[0]).attr('fill')).toEqual('blue');
+            expect(d3.select(chart.selectAll('circle.bubble').nodes()[3]).attr('fill')).toEqual('blue');
         });
 
-        it('should highlight the filtered bubbles', function () {
+        it('should highlight the filtered bubbles', () => {
             chart.filter('Colorado');
             chart.filter('California');
             chart.redraw();
-            expect(d3.select(chart.selectAll('g.node')[0][0]).attr('class')).toEqual('node california selected');
-            expect(d3.select(chart.selectAll('g.node')[0][1]).attr('class')).toEqual('node colorado selected');
-            expect(d3.select(chart.selectAll('g.node')[0][3]).attr('class')).toEqual('node ontario deselected');
+            expect(d3.select(chart.selectAll('g.node').nodes()[0]).attr('class')).toEqual('node california selected');
+            expect(d3.select(chart.selectAll('g.node').nodes()[1]).attr('class')).toEqual('node colorado selected');
+            expect(d3.select(chart.selectAll('g.node').nodes()[3]).attr('class')).toEqual('node ontario deselected');
         });
     });
 
-    function removeEmptyBins (group) {
-        return {
-            all: function () {
-                return group.all().filter(function (d) {
-                    return d.value !== 0;
-                });
-            }
-        };
-    }
-    describe('filtering another dimension', function () {
-        var regionDim;
-        beforeEach(function () {
-            chart.group(removeEmptyBins(group)).render();
-            regionDim = data.dimension(function (d) { return d.region; });
+    describe('filtering another dimension', () => {
+        let regionDim;
+        beforeEach(() => {
+            regionDim = data.dimension(d => d.region);
         });
         function expectRadii (expected) {
-            var circles = chart.selectAll('circle.bubble')[0];
-            console.log(circles.map(function (c) { return +d3.select(c).attr('r'); }));
-            circles.forEach(function (c, i) {
+            const circles = chart.selectAll('circle.bubble').nodes();
+            circles.forEach((c, i) => {
                 expect(+d3.select(c).attr('r')).toBeWithinDelta(expected[i], 0.1);
             });
         }
-        describe('without elastic radius', function () {
-            it('should have reasonable radii', function () {
+        describe('without elastic radius', () => {
+            it('should have reasonable radii', () => {
                 expectRadii([87, 21, 26.5, 48.5, 48.5, 37.5]);
             });
-            it('filtering should zero out some radii', function () {
+            it('filtering should zero out some radii', () => {
                 regionDim.filter('Central');
                 dc.redrawAll();
                 expectRadii([0, 0, 0, 37.5, 48.5, 0]);
             });
         });
-        describe('with elastic radius', function () {
-            beforeEach(function () {
+        describe('with elastic radius', () => {
+            beforeEach(() => {
                 chart.elasticRadius(true).render();
             });
-            it('should lock to the minimum and maximum radius sizes', function () {
+            it('should lock to the minimum and maximum radius sizes', () => {
                 expectRadii([60, 10, 14.1, 30.8, 30.8, 22.5]);
             });
-            it('filtering should lock the remaining bubbles to min and max radius sizes', function () {
+            it('filtering should lock the remaining bubbles to min and max radius sizes', () => {
                 regionDim.filter('Central');
                 dc.redrawAll();
                 expectRadii([0, 0, 0, 10, 60, 0]);
